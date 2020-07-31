@@ -3,14 +3,14 @@ import qs from 'qs'
 
 export const queryCoupon = (data) => {
     return requst({
-        url: 'https://api.zhetaoke.com:10003/api/api_quanwang.ashx' + '?' + qs.stringify(data),
+        url: 'http://localhost/queryGoods' + '?' + qs.stringify(data),
         method: 'get'
     })
 };
 
 export const getTpwd = (data) => {
     return requst({
-        url: 'https://api.zhetaoke.com:10003/api/api_quanwang.ashx' + '?' + qs.stringify(data),
+        url: 'http://localhost/getTpwd' + '?' + qs.stringify(data),
         method: 'get'
     })
 };
