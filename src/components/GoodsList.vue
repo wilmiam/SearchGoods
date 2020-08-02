@@ -2,8 +2,8 @@
     <div>
         <van-sticky>
             <van-search v-model="keyword"
-                    placeholder="请输入搜索关键词"
-                    @search="onSearchFun"
+                        placeholder="请输入搜索关键词"
+                        @search="onSearchFun"
             />
             <div>
                 <van-dropdown-menu>
@@ -40,13 +40,14 @@
                                 <div>
                                     <div style="display: block; color: #f64a06; font-size: 13px; margin-top: 10px">
                                         券后￥<span
-                                            style="font-size: 16px; font-weight: bold">{{item.couponPrice.split(".")[0]}}</span>.{{item.couponPrice.split(".")[1]}}
+                                            style="font-size: 16px; font-weight: bold">{{item.couponPrice}}</span>
                                     </div>
                                     <div style="color: #8d8d8d; font-size: 13px;">
                                         ￥<s>{{item.sellingPrice}}</s>
                                     </div>
                                 </div>
-                                <div class="copy-btn" @click="getTpwdFun(item.tkl)">
+                                <div class="copy-btn" :id="'itemId'+item.itemId" data-clipboard-action="copy" :data-clipboard-text="tkl"
+                                     @click="getTpwdFun(item.itemId)">
                                     点击复制
                                 </div>
                             </div>
@@ -62,6 +63,7 @@
 <script>
     import {getTpwd, queryCoupon} from "../api/taoke";
     import {Toast} from 'vant';
+    import Clipboard from 'clipboard';
 
     export default {
         name: "GoodsList",
@@ -74,13 +76,15 @@
                 finished: false,
                 finishedText: "没有更多了",
                 refreshing: false,
-                sort: 'new',
                 option1: [
                     {text: '默认排序', value: "new"},
                     {text: '销量从高到低', value: "sale_num_desc"},
                     {text: '价格从高到低', value: "price_desc"},
                     {text: '价格从低到高', value: "price_asc"},
                 ],
+
+                tkl: "",
+                sort: 'new',
                 keyword: "",
                 page: 1,
                 pageSize: 20,
@@ -100,22 +104,16 @@
                     if (refreshing) {
                         this.list = [];
                     }
-                    // if (res.status === 301) {
-                    //     this.loading = false;
-                    //     this.finished = true;
-                    //     this.finishedText = res.content;
-                    //     return;
-                    // }
 
-                    for (let i in res.content) {
-                        this.list.push(res.content[i]);
+                    for (let i in res.data) {
+                        this.list.push(res.data[i]);
                     }
 
                     this.page = this.page + 1;
                     this.loading = false;
 
                     //没有数据了显示完成
-                    if (res.content.length <= 0) {
+                    if (res.data.length <= 0) {
                         this.finished = true;
                     }
                 })
@@ -137,13 +135,31 @@
                 let data = {
                     itemId: itemId
                 };
-                console.log(itemId);
                 getTpwd(data).then(res => {
-                    console.log(JSON.stringify(res));
-                    document.execCommand("复制成功");
+                    this.tkl = res.data.tkl;
+                });
+
+                this.copyVal(itemId);
+            },
+            copyContent(content) {
+                let input = document.createElement("input");   // 直接构建input
+                input.value = content;  // 设置内容
+                document.body.appendChild(input);    // 添加临时实例
+                input.select();   // 选择实例内容
+                document.execCommand("Copy");   // 执行复制
+                document.body.removeChild(input); // 删除临时实例
+            },
+            copyVal(itemId) {
+                let clipboard = new Clipboard("#itemId" + itemId);
+                clipboard.on('success', function (e) {
+                    console.log("success：" + e.text);
                     Toast('复制成功，打开淘宝App即可查看');
-                    window.location.href = "taobao://";
-                })
+                    window.location.href = "taobao://home";
+                    e.clearSelection();
+                });
+                clipboard.on('error', function (e) {
+                    console.log("error")
+                });
             }
         }
     }
@@ -196,7 +212,7 @@
         height: 22px;
         width: 22px;
         text-align: center;
-        line-height: 20px;
+        line-height: 22px;
         background: #f64a06;
         border-left: 1px solid #f64a06;
         font-size: 14px;
@@ -224,7 +240,7 @@
         height: 30px;
         line-height: 30px;
         padding-left: 12px;
-        padding-right: 10px;
+        padding-right: 5px;
         color: #F2F2F2;
         border-bottom-left-radius: 30px;
         border-top-left-radius: 30px;
