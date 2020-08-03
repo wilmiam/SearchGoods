@@ -23,32 +23,65 @@
                         <div>
                             <van-image class="my-image" width="130" height="130" :src="item.itemImg"/>
                         </div>
-                        <div style="padding-left: 10px;">
+                        <div style="padding-left: 10px; width: 100%;">
                             <div class="van-multi-ellipsis--l2" style="font-size: 15px; margin-bottom: 5px">
                                 {{item.introduce}}
                             </div>
-                            <div class="quan-left" v-if="item.volume > 0">
-                                券
-                            </div>
-                            <div class="quan-right" v-if="item.volume > 0">
-                                {{item.couponMoney}}元
-                            </div>
-                            <div class="volume" v-if="item.volume > 0">
-                                已售{{item.sellCount}}件
+                            <div style="display: flex;">
+                                <div v-if="item.couponMoney > 0"
+                                     style="display: flex; border: 1px solid #f64a06; margin-right: 8px; border-radius: 5px">
+                                    <div class="quan-left">
+                                        券
+                                    </div>
+                                    <div class="quan-right">
+                                        {{item.couponMoney}}元
+                                    </div>
+                                </div>
+                                <div class="volume">
+                                    已售{{item.sellCount}}件
+                                </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center">
-                                <div>
+                                <div v-if="item.couponMoney > 0">
                                     <div style="display: block; color: #f64a06; font-size: 13px; margin-top: 10px">
-                                        券后￥<span
-                                            style="font-size: 16px; font-weight: bold">{{item.couponPrice}}</span>
+                                        券后￥
+                                        <span v-if="(item.couponPrice+'').indexOf('.') === -1"
+                                              style="font-size: 16px; font-weight: bold">
+                                            {{item.couponPrice}}
+                                        </span>
+                                        <span v-if="(item.couponPrice+'').indexOf('.') !== -1"
+                                              style="font-size: 16px; font-weight: bold">
+                                            {{(item.couponPrice+'').split(".")[0]}}
+                                        </span>
+                                        <span v-if="(item.couponPrice+'').indexOf('.') !== -1">
+                                            .{{(item.couponPrice+'').split(".")[1]}}
+                                        </span>
                                     </div>
                                     <div style="color: #8d8d8d; font-size: 13px;">
                                         ￥<s>{{item.sellingPrice}}</s>
                                     </div>
                                 </div>
-                                <div class="copy-btn" :id="'itemId'+item.itemId" data-clipboard-action="copy" :data-clipboard-text="tkl"
+                                <div v-else>
+                                    <div style="display: block; color: #f64a06; font-size: 13px; margin-top: 10px">
+                                        ￥
+                                        <span v-if="(item.couponPrice+'').indexOf('.') === -1"
+                                              style="font-size: 16px; font-weight: bold">
+                                            {{item.couponPrice}}
+                                        </span>
+                                        <span v-if="(item.couponPrice+'').indexOf('.') !== -1"
+                                              style="font-size: 16px; font-weight: bold">
+                                            {{(item.couponPrice+'').split(".")[0]}}
+                                        </span>
+                                        <span v-if="(item.couponPrice+'').indexOf('.') !== -1">
+                                            .{{(item.couponPrice+'').split(".")[1]}}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="copy-btn" :id="'itemId'+item.itemId" data-clipboard-action="copy"
+                                     :data-clipboard-text="tkl"
                                      @click="getTpwdFun(item.itemId)">
-                                    点击复制
+                                    复制打开淘宝
                                 </div>
                             </div>
                         </div>
@@ -88,16 +121,21 @@
                 keyword: "",
                 page: 1,
                 pageSize: 20,
-                cat: null
+                youquan: 1
             }
         },
         methods: {
             onLoad: function (refreshing) {
+                //刷新就重置页数
+                if (refreshing) {
+                    this.page = 1;
+                }
                 let data = {
                     page: this.page,
                     pageSize: this.pageSize,
                     sort: this.sort,
-                    keyword: this.keyword
+                    keyword: this.keyword,
+                    youquan: this.youquan
                 };
                 queryCoupon(data).then(res => {
                     //刷新就清空数据列表
@@ -116,10 +154,12 @@
                     if (res.data.length <= 0) {
                         this.finished = true;
                     }
+                    if (res.data.length === 1 && res.data[0].tkl) {
+                        this.finished = true;
+                    }
                 })
             },
             onRefresh() {
-                this.page = 1;
                 this.loading = true;
                 this.finished = false;
                 setTimeout(() => {
@@ -128,6 +168,7 @@
                 }, 1000);
             },
             onSearchFun() {
+                this.youquan = 0;
                 this.loading = true;
                 this.onLoad(true)
             },
@@ -190,44 +231,31 @@
         border-top-left-radius: 10px !important;
     }
 
-    .quan-right {
-        display: inline-block;
+    .quan-left {
         height: 20px;
+        width: 20px;
         text-align: center;
-        line-height: 20px;
-        border-top: 1px solid #f64a06;
-        border-bottom: 1px solid #f64a06;
-        border-right: 1px solid #f64a06;
+        background: #f64a06;
+        font-size: 15px;
+        color: #FFFFFF;
+        padding: 2px;
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+        font-weight: bold;
+    }
+
+    .quan-right {
+        height: 20px;
+        line-height: 21px;
         font-size: 10px;
         color: #f64a06;
         padding: 2px;
-        border-top-right-radius: 5px;
-        border-bottom-right-radius: 5px;
-        font-weight: bold;
-        margin-right: 8px
-    }
-
-    .quan-left {
-        display: inline-block;
-        height: 22px;
-        width: 22px;
-        text-align: center;
-        line-height: 22px;
-        background: #f64a06;
-        border-left: 1px solid #f64a06;
-        font-size: 14px;
-        color: #FFFFFF;
-        padding: 2px;
-        border-top-left-radius: 5px;
-        border-bottom-left-radius: 5px;
         font-weight: bold;
     }
 
     .volume {
-        display: inline-block;
         height: 20px;
-        text-align: center;
-        line-height: 20px;
+        line-height: 21px;
         border: 1px solid #e4784f;
         font-size: 10px;
         color: #f64a06;
